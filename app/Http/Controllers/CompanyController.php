@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\Company;
+use App\Search\CompanySearch;
+use Illuminate\Contracts\Pagination\Paginator;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
 
@@ -38,32 +40,13 @@ class CompanyController extends Controller
      * 
      * @param Request $request
      * 
-     * @return Company
+     * @return Paginator
      */
-    public function index(Request $request)
+    public function index(Request $request): Paginator
     {
-        $name = $request->input('name');
-        $sort = $request->input('sort');
-        $column = key($sort) ?? 'created_at';
-        $order = current($sort) ?? 'desc';
-        $codition = [];
+        $searchModel = new CompanySearch();
 
-        $company = new Company();
-
-        // 收集條件篩選
-        if ($name) {
-            $codition[] = ['name', 'like', "%{$name}%"];
-        }
-
-        $perPage = (int) ($request->input('per_page') ?? 20);
-        $page = (int) ($request->input('page') ?? 1);
-
-        $company = $company->sortCompany($column, $order)
-            ->where($codition)
-            ->withAvg('comment', 'score')
-            ->paginate($perPage, ['*'], 'page', $page);
-
-        return $company;
+        return $searchModel->result($request);
     }
 
     /**
